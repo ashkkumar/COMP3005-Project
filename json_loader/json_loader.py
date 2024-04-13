@@ -26,7 +26,7 @@ def insert_season(matches_data):
     INSERT INTO Season (
         season_id, season_name
     ) VALUES (
-        %s,%s
+        %(season_id)s,%(season_name)s
     );
     """
     try:
@@ -56,7 +56,7 @@ def insert_competition(competition_data):
     INSERT INTO Competitions (
         competition_id, season_id, competition_name, competition_gender, conutry_name, season_name
     ) VALUES (
-        %s,%s,%s,%s,%s,%s
+        %(competition_id)s,%(season_id)s,%(competition_name)s,%(competition_gender)s,%(country_name)s,%(season_name)s
     );
     """
     try:
@@ -86,7 +86,7 @@ def insert_country(matches_data):
     INSERT INTO Country (
         country_id, country_name
     ) VALUES (
-        %s,%s
+        %(country_id)s,%(country_name)s
     );
     """
     try:
@@ -116,7 +116,7 @@ def insert_stadium(matches_data):
     INSERT INTO Stadium (
         stadium_id, stadium_name, country_id
     ) VALUES (
-        %s,%s,%s
+        %(stadium_id)s,%(stadium_name)s,%(country_id)s
     );
     """
     try:
@@ -146,7 +146,7 @@ def insert_referees(matches_data):
     INSERT INTO Referees (
         referee_id, name
     ) VALUES (
-        %s,%s
+        %(referee_id)s,%(name)s
     );
     """
     try:
@@ -176,7 +176,7 @@ def insert_team(matches_data):
     INSERT INTO Team (
         team_id, country_id, team_name, team_gender, team_group  
     ) VALUES (
-        %s,%s,%s,%s,%s
+        %(team_id)s,%(country_id)s,%(team_name)s,%(team_gender)s,%(team_group)s
     );
     """
     try:
@@ -207,7 +207,8 @@ def insert_matches(matches_data):
         match_id, competition_id, country_name, season_id, match_date, kick_off, stadium_id, referee_id,
         home_team_id, away_team_id, home_team_score, away_team_score
     ) VALUES (
-        %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+        %(match_id)s,%(competition_id)s,%(country_name)s,%(season_id)s,%(match_date)s,%(kick_off)s,
+        %(stadium_id)s,%(referee_id)s,%(home_team_id)s,%(away_team_id)s,%(home_team_score)s,%(away_team_score)s
     );
     """
     try:
@@ -237,7 +238,7 @@ def insert_players(matches_data):
     INSERT INTO Players (
         player_id, country_id, player_name, player_nickname, jersey_number
     ) VALUES (
-        %s,%s,%s,%s,%s
+        %(player_id)s,%(country_id)s,%(player_name)s,%(player_nickname)s,%(jersey_number)s
     );
     """
     try:
@@ -267,7 +268,7 @@ def insert_lineup(matches_data):
     INSERT INTO Lineup (
         team_id, player_id, team_name
     ) VALUES (
-        %s,%s,%s
+        %(team_id)s,%(player_id)s,%(team_name)s
     );
     """
     try:
@@ -297,7 +298,7 @@ def insert_managers(matches_data):
     INSERT INTO Managers (
         manager_id, manager_name, manager_nickname, dob, country_id
     ) VALUES (
-        %s,%s,%s,%s,%s
+        %(manager_id)s,%(manager_name)s,%(manager_nickname)s,%(dobs),%(country_id)s
     );
     """
     try:
@@ -328,7 +329,9 @@ def insert_events(events_data):
         event_id, index, timestamp, minute, second, type_id, possession, play_pattern_id, team_id,
         player_id, position_id, location, duration, under_pressure, off_camera, out
     ) VALUES (
-        %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+        %(event_id)s,%(index)s,%(timestamp)s,%(minute)s,%(second)s,%(type_id)s,%(possession)s,
+        %(play_pattern_id)s,%(team_id)s,%(player_id)s,%(position_id)s,%(location)s,%(duration)s,
+        %(under_pressure)s,%(off_camera)s,%(out)s
     );
     """
     try:
@@ -361,7 +364,7 @@ def insert_dribbles(matches_data):
     INSERT INTO Dribbles (
         event_id, match_id, outcome_id, nutmeg, overrun, no_touch
     ) VALUES (
-        %s,%s,%s,%s,%s,%s
+        %(event_id)s,%(match_id)s,%(outcome_id)s,%(nutmeg)s,%(overrun)s,%(no_touch)s
     );
     """
     try:
@@ -390,10 +393,12 @@ def insert_passes(passes_data):
     insert_query = """
     INSERT INTO Passes (
         event_id, match_id, player_id, length, end_location, assisted_shot_id, backheel, 
-        deflected, miscommunication, cross_pass, switch,shot_assist, goal_assist,
+        deflected, miscommunication, cross_pass, switch, shot_assist, goal_assist,
         body_part, type_id, outcome_id, technique_id, technique_name
     ) VALUES (
-        %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s
+        %(event_id)s,%(match_id)s,%(player_id)s,%(length)s,%(end_location)s,%(assisted_shot_id)s,
+        %(backheel)s,%(deflected)s,%(miscommunication)s,%(cross_pass)s,%(switch)s,%(shot_assist)s,
+        %(goal_assist)s,%(body_part)s,%(type_id)s,%(outcome_id)s,%(technique_id)s,%(technique_name)s
     );
     """
     try:
@@ -429,7 +434,9 @@ def insert_shots(shots_data):
         event_id, match_id, key_pass_id, end_location, aerial_won, follows_dribble, first_time,
         open_goal, statsbomb_xg, deflected, technique_id, body_part, type_id, outcome_id
     ) VALUES (
-        %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s 
+        %(event_id)s,%(match_id)s,%(key_pass_id)s,%(end_location)s,%(aerial_won)s,%(follows_dribble)s,
+        %(first_time)s,%(open_goal)s,%(statsbomb_xg)s,%(deflected)s,%(technique_id)s,%(body_part)s,
+        %(type_id)s,%(outcome_id)s 
     );
     """
     try:
@@ -466,7 +473,7 @@ def insert_card(matches_data):
     INSERT INTO Card (
         card_id, card_name
     ) VALUES (
-        %s,%s
+        %(card_id)s,%(card_name)s
     );
     """
     try:
@@ -496,7 +503,7 @@ def insert_fouls(matches_data):
     INSERT INTO Foul_Committed (
         event_id, advantage, counterpress, offensive, penalty, card_id, type_id
     ) VALUES (
-        %s,%s,%s,%s,%s,%s,%s
+        %(event_id)s,%(advantage)s,%(counterpress)s,%(offensive)s,%(penalty)s,%(card_id)s,%(type_id)s
     );
     """
     try:
@@ -526,7 +533,8 @@ def insert_goalkeepers(matches_data):
     INSERT INTO Goalkeeper (
         event_id, match_id, position_id, technique_id, technique_name, body_part, type_id, outcome_id
     ) VALUES (
-        %s,%s,%s,%s,%s,%s,%s,%s
+        %(event_id)s,%(match_id)s,%(position_id)s,%(technique_id)s,%(technique_name)s,
+        %(body_part)s,%(type_id)s,%(outcome_id)s
     );
     """
     try:
