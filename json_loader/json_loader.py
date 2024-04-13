@@ -42,7 +42,7 @@ def insert_season(matches_data):
 
         # Commit the transactions
         conn.commit()
-        print("Matches data inserted successfully.")
+        print("Season data inserted successfully.")
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
@@ -58,10 +58,15 @@ def insert_competition(competition_data):
     conn = connect()
     insert_query = """
     INSERT INTO competitions (
-        competition_id, competition_name, competition_gender, country_name, season_name
+        competition_id, season_id, competition_name, competition_gender, country_name, season_name
     ) VALUES (
-        %(competition_id)s,%(competition_name)s,%(competition_gender)s,%(country_name)s,%(season_name)s
-    );
+        %(competition_id)s, %(season_id)s ,%(competition_name)s,%(competition_gender)s,%(country_name)s,%(season_name)s
+    )
+    ON CONFLICT (competition_id) DO UPDATE SET
+    competition_name = EXCLUDED.competition_name,
+    competition_gender = EXCLUDED.competition_gender,
+    country_name = EXCLUDED.country_name,
+    season_name = EXCLUDED.season_name;
     """
     try:
         # Connect to the database
@@ -73,7 +78,7 @@ def insert_competition(competition_data):
 
         # Commit the transactions
         conn.commit()
-        print("Matches data inserted successfully.")
+        print("Comp data inserted successfully.")
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
@@ -104,7 +109,7 @@ def insert_country(matches_data):
 
         # Commit the transactions
         conn.commit()
-        print("Matches data inserted successfully.")
+        print("country data inserted successfully.")
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
@@ -135,7 +140,7 @@ def insert_stadium(matches_data):
 
         # Commit the transactions
         conn.commit()
-        print("Matches data inserted successfully.")
+        print("stadium data inserted successfully.")
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
@@ -166,7 +171,7 @@ def insert_referees(matches_data):
 
         # Commit the transactions
         conn.commit()
-        print("Matches data inserted successfully.")
+        print("ref data inserted successfully.")
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
@@ -197,7 +202,7 @@ def insert_team(matches_data):
 
         # Commit the transactions
         conn.commit()
-        print("Matches data inserted successfully.")
+        print("team data inserted successfully.")
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
@@ -261,7 +266,7 @@ def insert_players(matches_data):
 
         # Commit the transactions
         conn.commit()
-        print("Matches data inserted successfully.")
+        print("players data inserted successfully.")
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
@@ -292,7 +297,7 @@ def insert_lineup(matches_data):
 
         # Commit the transactions
         conn.commit()
-        print("Matches data inserted successfully.")
+        print("lineup data inserted successfully.")
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
@@ -323,7 +328,7 @@ def insert_managers(matches_data):
 
         # Commit the transactions
         conn.commit()
-        print("Matches data inserted successfully.")
+        print("Managers data inserted successfully.")
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
@@ -391,7 +396,7 @@ def insert_dribbles(matches_data):
 
         # Commit the transactions
         conn.commit()
-        print("Matches data inserted successfully.")
+        print("dribs data inserted successfully.")
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
@@ -503,7 +508,7 @@ def insert_card(matches_data):
 
         # Commit the transactions
         conn.commit()
-        print("Matches data inserted successfully.")
+        print("card data inserted successfully.")
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
@@ -534,7 +539,7 @@ def insert_fouls(matches_data):
 
         # Commit the transactions
         conn.commit()
-        print("Matches data inserted successfully.")
+        print("fouls data inserted successfully.")
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
@@ -566,7 +571,7 @@ def insert_goalkeepers(matches_data):
 
         # Commit the transactions
         conn.commit()
-        print("Matches data inserted successfully.")
+        print("goalkeepers data inserted successfully.")
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
@@ -576,16 +581,6 @@ def insert_goalkeepers(matches_data):
             cur.close()
         if conn:
             conn.close()
-
-
-# Assuming you have a JSON file with matches data
-# Replace 'path_to_your_json_file.json' with the path to your JSON file
-# with open('path_to_your_json_file.json', 'r') as file:
-#   matches_data = json.load(file)
-
-# Call the function to insert data
-# insert_matches(matches_data)
-
 
 def import_matches(jfile):
     with open(jfile, 'r') as file:
