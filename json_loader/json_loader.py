@@ -45,12 +45,7 @@ def insert_competition(competition_data):
         competition_id, season_id, competition_name, competition_gender, country_name, season_name
     ) VALUES (
         %(competition_id)s, %(season_id)s ,%(competition_name)s,%(competition_gender)s,%(country_name)s,%(season_name)s
-    )
-    ON CONFLICT (competition_id) DO UPDATE SET
-    competition_name = EXCLUDED.competition_name,
-    competition_gender = EXCLUDED.competition_gender,
-    country_name = EXCLUDED.country_name,
-    season_name = EXCLUDED.season_name;
+    );
     """
     try:
         # Connect to the database
@@ -105,30 +100,22 @@ def insert_country(matches_data):
             conn.close()
 
 
-def insert_stadium(data):
-    # Assuming data is a list of matches, and each match contains a 'stadium' key
+def insert_stadium(match_data):
     conn = connect()
     cur = conn.cursor()
-    for match in data:
-        stadium_data = {
-            'stadium_id': match['stadium']['id'],
-            'stadium_name': match['stadium']['name'],
-            'country_id': match['stadium']['country']['id']
-        }
-        try:
-            print("Inserting stadium with data:", stadium_data)  # Debug output
-            insert_query = """
-            INSERT INTO stadium (stadium_id, stadium_name, country_id)
-            VALUES (%(stadium_id)s, %(stadium_name)s, %(country_id)s)
-            ON CONFLICT (stadium_id) DO UPDATE SET
-                stadium_name = EXCLUDED.stadium_name,
-                country_id = EXCLUDED.country_id;
-            """
-            cur.execute(insert_query, stadium_data)
-            conn.commit()
-        except Exception as e:
-            print(f"Failed to insert stadium data for Stadium ID {stadium_data['stadium_id']} due to: {e}")
-            conn.rollback()
+    for match in match_data:
+        if match.get('stadium') is not None:
+            stadium = match['stadium']
+            # Check if the team already exists in the table
+            cur.execute("SELECT 1 FROM stadium WHERE stadium_id = %s", (stadium['id'],))
+            existing_stadium = cur.fetchone()
+            if not existing_stadium:
+                cur.execute("""
+                    INSERT INTO stadium (stadium_id, stadium_name)
+                    VALUES (%s, %s)""",
+                    (stadium['id'], stadium['name'])
+                )
+    conn.commit()
 
 
 def insert_referees(matches_data):
@@ -166,9 +153,9 @@ def insert_team(matches_data):
     conn = connect()
     insert_query = """
     INSERT INTO team (
-        team_id, country_id, team_name, team_gender, team_group  
+        team_id, team_name, team_gender, team_group  
     ) VALUES (
-        %(team_id)s,%(country_id)s,%(team_name)s,%(team_gender)s,%(team_group)s
+        %(team_id)s,%(team_name)s,%(team_gender)s,%(team_group)s
     );
     """
     try:
@@ -201,25 +188,24 @@ def insert_matches(matches_data):
             # Prepare match data for insertion
             match_data = {
                 'match_id': match['match_id'],  # Ensure this key exists in your JSON data
-                'away_team_id': match['away_team']['away_team_id'],
                 'away_team_score': match['away_score'],
                 'competition_id': match['competition']['competition_id'],
                 'country_name': match['competition']['country_name'],
-                'home_team_id': match['home_team']['home_team_id'],
                 'home_team_score': match['home_score'],
                 'referee_id': match.get('referee', {}).get('referee_id', None),
-                'season_id': match['season']['season_id'],
-                'stadium_id': match['stadium']['id']
+                'season_id': match['season']['season_id']
+               #'stadium_id': match['stadium']['id']
+                #'home_team_id': match['home_team']['home_team_id'],
             }
 
             # Insert match data
             insert_query = """
                        INSERT INTO Matches (
-                           match_id, away_team_id, away_team_score, competition_id, country_name, 
-                           home_team_id, home_team_score, referee_id, season_id, stadium_id
+                           match_id, away_team_score, competition_id, country_name, 
+                         home_team_score,referee_id, season_id
                        ) VALUES (
-                           %(match_id)s, %(away_team_id)s, %(away_team_score)s, %(competition_id)s, %(country_name)s, 
-                           %(home_team_id)s, %(home_team_score)s, %(referee_id)s, %(season_id)s, %(stadium_id)s
+                           %(match_id)s, %(away_team_score)s, %(competition_id)s, %(country_name)s, 
+                        %(home_team_score)s, %(referee_id)s, %(season_id)s
                        );
                        """
             cur.execute(insert_query, match_data)
@@ -227,7 +213,7 @@ def insert_matches(matches_data):
 
         except Exception as e:
             print(f"Failed to insert data for match ID {match['match_id']} due to: {e}")
-            conn.rollback()
+            #conn.rollback()
 
 
 def insert_players(matches_data):
@@ -653,9 +639,7 @@ def import_from_directory(directory):
             if filename.endswith('.json'):
                 full_path = os.path.join(root, filename)
                 # Determine the type of data based on the filename and call appropriate import function
-                if 'matches' in filename.lower():
-                    import_matches(full_path)
-                elif 'competitions' in filename.lower():
+                if 'competitions' in filename.lower():
                     import_competitions(full_path)
                 elif 'events' in filename.lower():
                     import_events(full_path)
