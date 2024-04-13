@@ -13,17 +13,20 @@ db_password = 'admin'
 db_host = 'localhost'
 db_port = '5432'
 
-conn = psycopg.connect(
-    dbname=root_database_name,
-    user=db_username,
-    password=db_password,
-    host=db_host,
-    port=db_port)
 
+def connect():
+    conn = psycopg.connect(
+        dbname=root_database_name,
+        user=db_username,
+        password=db_password,
+        host=db_host,
+        port=db_port)
+    return conn
 
 def insert_season(matches_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Season (
+    INSERT INTO season (
         season_id, season_name
     ) VALUES (
         %(season_id)s,%(season_name)s
@@ -43,7 +46,7 @@ def insert_season(matches_data):
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
-        print(f"Error: {e}")
+        print(f"Error seasons: {e}")
     finally:
         if cur:
             cur.close()
@@ -52,11 +55,12 @@ def insert_season(matches_data):
 
 
 def insert_competition(competition_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Competitions (
-        competition_id, season_id, competition_name, competition_gender, conutry_name, season_name
+    INSERT INTO competitions (
+        competition_id, competition_name, competition_gender, country_name, season_name
     ) VALUES (
-        %(competition_id)s,%(season_id)s,%(competition_name)s,%(competition_gender)s,%(country_name)s,%(season_name)s
+        %(competition_id)s,%(competition_name)s,%(competition_gender)s,%(country_name)s,%(season_name)s
     );
     """
     try:
@@ -73,7 +77,7 @@ def insert_competition(competition_data):
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
-        print(f"Error: {e}")
+        print(f"Error comps: {e}")
     finally:
         if cur:
             cur.close()
@@ -82,8 +86,9 @@ def insert_competition(competition_data):
 
 
 def insert_country(matches_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Country (
+    INSERT INTO country (
         country_id, country_name
     ) VALUES (
         %(country_id)s,%(country_name)s
@@ -103,7 +108,7 @@ def insert_country(matches_data):
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
-        print(f"Error: {e}")
+        print(f"Error countries: {e}")
     finally:
         if cur:
             cur.close()
@@ -112,8 +117,9 @@ def insert_country(matches_data):
 
 
 def insert_stadium(matches_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Stadium (
+    INSERT INTO stadium (
         stadium_id, stadium_name, country_id
     ) VALUES (
         %(stadium_id)s,%(stadium_name)s,%(country_id)s
@@ -142,8 +148,9 @@ def insert_stadium(matches_data):
 
 
 def insert_referees(matches_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Referees (
+    INSERT INTO referees (
         referee_id, name
     ) VALUES (
         %(referee_id)s,%(name)s
@@ -172,8 +179,9 @@ def insert_referees(matches_data):
 
 
 def insert_team(matches_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Team (
+    INSERT INTO team (
         team_id, country_id, team_name, team_gender, team_group  
     ) VALUES (
         %(team_id)s,%(country_id)s,%(team_name)s,%(team_gender)s,%(team_group)s
@@ -202,8 +210,9 @@ def insert_team(matches_data):
 
 
 def insert_matches(matches_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Matches (
+    INSERT INTO matches (
         match_id, competition_id, country_name, season_id, match_date, kick_off, stadium_id, referee_id,
         home_team_id, away_team_id, home_team_score, away_team_score
     ) VALUES (
@@ -234,8 +243,9 @@ def insert_matches(matches_data):
 
 
 def insert_players(matches_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Players (
+    INSERT INTO players (
         player_id, country_id, player_name, player_nickname, jersey_number
     ) VALUES (
         %(player_id)s,%(country_id)s,%(player_name)s,%(player_nickname)s,%(jersey_number)s
@@ -264,8 +274,9 @@ def insert_players(matches_data):
 
 
 def insert_lineup(matches_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Lineup (
+    INSERT INTO lineup (
         team_id, player_id, team_name
     ) VALUES (
         %(team_id)s,%(player_id)s,%(team_name)s
@@ -294,11 +305,12 @@ def insert_lineup(matches_data):
 
 
 def insert_managers(matches_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Managers (
+    INSERT INTO managers (
         manager_id, manager_name, manager_nickname, dob, country_id
     ) VALUES (
-        %(manager_id)s,%(manager_name)s,%(manager_nickname)s,%(dobs),%(country_id)s
+        %(manager_id)s,%(manager_name)s,%(manager_nickname)s,%(dob)s,%(country_id)s
     );
     """
     try:
@@ -324,8 +336,9 @@ def insert_managers(matches_data):
 
 
 def insert_events(events_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Events (
+    INSERT INTO events (
         event_id, index, timestamp, minute, second, type_id, possession, play_pattern_id, team_id,
         player_id, position_id, location, duration, under_pressure, off_camera, out
     ) VALUES (
@@ -360,8 +373,9 @@ def insert_events(events_data):
 
 
 def insert_dribbles(matches_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Dribbles (
+    INSERT INTO dribbles (
         event_id, match_id, outcome_id, nutmeg, overrun, no_touch
     ) VALUES (
         %(event_id)s,%(match_id)s,%(outcome_id)s,%(nutmeg)s,%(overrun)s,%(no_touch)s
@@ -390,8 +404,9 @@ def insert_dribbles(matches_data):
 
 
 def insert_passes(passes_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Passes (
+    INSERT INTO passes (
         event_id, match_id, player_id, length, end_location, assisted_shot_id, backheel, 
         deflected, miscommunication, cross_pass, switch, shot_assist, goal_assist,
         body_part, type_id, outcome_id, technique_id, technique_name
@@ -429,8 +444,9 @@ def insert_passes(passes_data):
 
 
 def insert_shots(shots_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Shots (
+    INSERT INTO shots (
         event_id, match_id, key_pass_id, end_location, aerial_won, follows_dribble, first_time,
         open_goal, statsbomb_xg, deflected, technique_id, body_part, type_id, outcome_id
     ) VALUES (
@@ -469,8 +485,9 @@ def insert_shots(shots_data):
 
 
 def insert_card(matches_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Card (
+    INSERT INTO card (
         card_id, card_name
     ) VALUES (
         %(card_id)s,%(card_name)s
@@ -499,8 +516,9 @@ def insert_card(matches_data):
 
 
 def insert_fouls(matches_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Foul_Committed (
+    INSERT INTO foul_committed (
         event_id, advantage, counterpress, offensive, penalty, card_id, type_id
     ) VALUES (
         %(event_id)s,%(advantage)s,%(counterpress)s,%(offensive)s,%(penalty)s,%(card_id)s,%(type_id)s
@@ -529,8 +547,9 @@ def insert_fouls(matches_data):
 
 
 def insert_goalkeepers(matches_data):
+    conn = connect()
     insert_query = """
-    INSERT INTO Goalkeeper (
+    INSERT INTO goalkeeper (
         event_id, match_id, position_id, technique_id, technique_name, body_part, type_id, outcome_id
     ) VALUES (
         %(event_id)s,%(match_id)s,%(position_id)s,%(technique_id)s,%(technique_name)s,
@@ -551,7 +570,7 @@ def insert_goalkeepers(matches_data):
     except psycopg.DatabaseError as e:
         if conn:
             conn.rollback()
-        print(f"Error: {e}")
+        print(f"Error keepers: {e}")
     finally:
         if cur:
             cur.close()
@@ -571,12 +590,12 @@ def insert_goalkeepers(matches_data):
 def import_matches(jfile):
     with open(jfile, 'r') as file:
         data = json.load(file)
-        insert_matches(data)
+        insert_season(data)
         insert_team(data)
-        insert_managers(data)
         insert_stadium(data)
         insert_referees(data)
-        insert_season(data)
+        insert_matches(data)
+        insert_managers(data)
     return
 
 
@@ -588,6 +607,7 @@ def import_competitions(jfile):
 
 def import_events(jfile):
     with open(jfile, 'r') as file:
+        print(file)
         data = json.load(file)
         insert_events(data)
         insert_dribbles(data)
@@ -610,11 +630,17 @@ def import_lineups(jfile):
 
 
 def import_all_data():
-    path = "/Users/ashkumar/PycharmProjects/COMP3005-Project/json_loader/data"
-    # match data 18/19
+    conn = connect()
+
+    path = "/Users/ashkumar/PycharmProjects/COMP3005-Project/json_loader/data/"
+    jfile = os.path.join(path, "competitions.json")
+
+    import_competitions(jfile)
+
     # match data 02/03
     jfile = os.path.join(path, "matches", "2", "44.json")
     import_matches(jfile)
+    # match data 18/19
     jfile = os.path.join(path, "matches", "11", "4.json")
     import_matches(jfile)
     # match data 19/20
@@ -625,20 +651,38 @@ def import_all_data():
     import_matches(jfile)
 
     # competitions
-    jfile = os.path.join(path, "competitions.json")
-    import_competitions(jfile)
 
     # events
-    event_path = "/Users/ashkumar/PycharmProjects/COMP3005-Project/json_loader/data/events"
+    event_path = "/Users/ashkumar/PycharmProjects/COMP3005-Project/json_loader/data/events/"
     for file in os.listdir(event_path):
         import_events(file)
 
     # lineups
-    lineup_path = "/Users/ashkumar/PycharmProjects/COMP3005-Project/json_loader/data/lineups"
+    lineup_path = "/Users/ashkumar/PycharmProjects/COMP3005-Project/json_loader/data/lineups/"
     for file in os.listdir(lineup_path):
         import_lineups(file)
 
     conn.close()
 
 
-import_all_data()
+def import_from_directory(directory):
+    for root, dirs, files in os.walk(directory):
+        for filename in files:
+            if filename.endswith('.json'):
+                full_path = os.path.join(root, filename)
+                # Determine the type of data based on the filename and call appropriate import function
+                if 'matches' in filename.lower():
+                    import_matches(full_path)
+                elif 'competitions' in filename.lower():
+                    import_competitions(full_path)
+                elif 'events' in filename.lower():
+                    import_events(full_path)
+                elif 'lineups' in filename.lower():
+                    import_lineups(full_path)
+                else:
+                    print(f"Skipped: {filename}")
+            else:
+                print(f"File not processed (not JSON): {filename}")
+
+# Process the parent directory recursively
+import_from_directory("/Users/ashkumar/PycharmProjects/COMP3005-Project/json_loader/data/")
