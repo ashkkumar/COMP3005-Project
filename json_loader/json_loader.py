@@ -23,36 +23,20 @@ def connect():
         port=db_port)
     return conn
 
-def insert_season(matches_data):
+
+def insert_season1(data):
     conn = connect()
-    insert_query = """
-    INSERT INTO season (
-        season_id, season_name
-    ) VALUES (
-        %(season_id)s,%(season_name)s
-    );
-    """
-    try:
-        # Connect to the database
-        cur = conn.cursor()
-
-        # Insert each match
-        for match in matches_data:
-            cur.execute(insert_query, match)
-
-        # Commit the transactions
-        conn.commit()
-        print("Season data inserted successfully.")
-    except psycopg.DatabaseError as e:
-        if conn:
+    cur = conn.cursor()
+    for match in data:
+        season_data = match['season']
+        try:
+            print("Inserting season with data:", season_data)  # Debug output
+            insert_query = "INSERT INTO Season (season_id, season_name) VALUES (%(season_id)s, %(season_name)s) ON CONFLICT (season_id) DO NOTHING;"
+            cur.execute(insert_query, season_data)
+            conn.commit()
+        except Exception as e:
+            print(f"Failed to insert season data due to: {e}")
             conn.rollback()
-        print(f"Error seasons: {e}")
-    finally:
-        if cur:
-            cur.close()
-        if conn:
-            conn.close()
-
 
 def insert_competition(competition_data):
     conn = connect()
@@ -80,8 +64,8 @@ def insert_competition(competition_data):
         conn.commit()
         print("Comp data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+       # if conn:
+        #    conn.rollback()
         print(f"Error comps: {e}")
     finally:
         if cur:
@@ -111,8 +95,8 @@ def insert_country(matches_data):
         conn.commit()
         print("country data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+        #if conn:
+         #   conn.rollback()
         print(f"Error countries: {e}")
     finally:
         if cur:
@@ -121,35 +105,30 @@ def insert_country(matches_data):
             conn.close()
 
 
-def insert_stadium(matches_data):
+def insert_stadium(data):
+    # Assuming data is a list of matches, and each match contains a 'stadium' key
     conn = connect()
-    insert_query = """
-    INSERT INTO stadium (
-        stadium_id, stadium_name, country_id
-    ) VALUES (
-        %(stadium_id)s,%(stadium_name)s,%(country_id)s
-    );
-    """
-    try:
-        # Connect to the database
-        cur = conn.cursor()
-
-        # Insert each match
-        for match in matches_data:
-            cur.execute(insert_query, match)
-
-        # Commit the transactions
-        conn.commit()
-        print("stadium data inserted successfully.")
-    except psycopg.DatabaseError as e:
-        if conn:
+    cur = conn.cursor()
+    for match in data:
+        stadium_data = {
+            'stadium_id': match['stadium']['id'],
+            'stadium_name': match['stadium']['name'],
+            'country_id': match['stadium']['country']['id']
+        }
+        try:
+            print("Inserting stadium with data:", stadium_data)  # Debug output
+            insert_query = """
+            INSERT INTO stadium (stadium_id, stadium_name, country_id)
+            VALUES (%(stadium_id)s, %(stadium_name)s, %(country_id)s)
+            ON CONFLICT (stadium_id) DO UPDATE SET
+                stadium_name = EXCLUDED.stadium_name,
+                country_id = EXCLUDED.country_id;
+            """
+            cur.execute(insert_query, stadium_data)
+            conn.commit()
+        except Exception as e:
+            print(f"Failed to insert stadium data for Stadium ID {stadium_data['stadium_id']} due to: {e}")
             conn.rollback()
-        print(f"Error: {e}")
-    finally:
-        if cur:
-            cur.close()
-        if conn:
-            conn.close()
 
 
 def insert_referees(matches_data):
@@ -173,8 +152,8 @@ def insert_referees(matches_data):
         conn.commit()
         print("ref data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+        #if conn:
+         #   conn.rollback()
         print(f"Error: {e}")
     finally:
         if cur:
@@ -204,8 +183,8 @@ def insert_team(matches_data):
         conn.commit()
         print("team data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+       # if conn:
+        #    conn.rollback()
         print(f"Error: {e}")
     finally:
         if cur:
@@ -216,35 +195,39 @@ def insert_team(matches_data):
 
 def insert_matches(matches_data):
     conn = connect()
-    insert_query = """
-    INSERT INTO matches (
-        match_id, competition_id, country_name, season_id, match_date, kick_off, stadium_id, referee_id,
-        home_team_id, away_team_id, home_team_score, away_team_score
-    ) VALUES (
-        %(match_id)s,%(competition_id)s,%(country_name)s,%(season_id)s,%(match_date)s,%(kick_off)s,
-        %(stadium_id)s,%(referee_id)s,%(home_team_id)s,%(away_team_id)s,%(home_team_score)s,%(away_team_score)s
-    );
-    """
-    try:
-        # Connect to the database
-        cur = conn.cursor()
+    cur = conn.cursor()
+    for match in matches_data:
+        try:
+            # Prepare match data for insertion
+            match_data = {
+                'match_id': match['match_id'],  # Ensure this key exists in your JSON data
+                'away_team_id': match['away_team']['away_team_id'],
+                'away_team_score': match['away_score'],
+                'competition_id': match['competition']['competition_id'],
+                'country_name': match['competition']['country_name'],
+                'home_team_id': match['home_team']['home_team_id'],
+                'home_team_score': match['home_score'],
+                'referee_id': match.get('referee', {}).get('referee_id', None),
+                'season_id': match['season']['season_id'],
+                'stadium_id': match['stadium']['id']
+            }
 
-        # Insert each match
-        for match in matches_data:
-            cur.execute(insert_query, match)
+            # Insert match data
+            insert_query = """
+                       INSERT INTO Matches (
+                           match_id, away_team_id, away_team_score, competition_id, country_name, 
+                           home_team_id, home_team_score, referee_id, season_id, stadium_id
+                       ) VALUES (
+                           %(match_id)s, %(away_team_id)s, %(away_team_score)s, %(competition_id)s, %(country_name)s, 
+                           %(home_team_id)s, %(home_team_score)s, %(referee_id)s, %(season_id)s, %(stadium_id)s
+                       );
+                       """
+            cur.execute(insert_query, match_data)
+            conn.commit()
 
-        # Commit the transactions
-        conn.commit()
-        print("Matches data inserted successfully.")
-    except psycopg.DatabaseError as e:
-        if conn:
+        except Exception as e:
+            print(f"Failed to insert data for match ID {match['match_id']} due to: {e}")
             conn.rollback()
-        print(f"Error: {e}")
-    finally:
-        if cur:
-            cur.close()
-        if conn:
-            conn.close()
 
 
 def insert_players(matches_data):
@@ -268,8 +251,8 @@ def insert_players(matches_data):
         conn.commit()
         print("players data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+      #  if conn:
+            #conn.rollback()
         print(f"Error: {e}")
     finally:
         if cur:
@@ -299,8 +282,8 @@ def insert_lineup(matches_data):
         conn.commit()
         print("lineup data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+        #if conn:
+           # conn.rollback()
         print(f"Error: {e}")
     finally:
         if cur:
@@ -330,8 +313,8 @@ def insert_managers(matches_data):
         conn.commit()
         print("Managers data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+        #if conn:
+            #conn.rollback()
         print(f"Error: {e}")
     finally:
         if cur:
@@ -367,8 +350,8 @@ def insert_events(events_data):
         conn.commit()
         print("Events data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+       # if conn:
+           # conn.rollback()
         print(f"Error: {e}")
     finally:
         if cur:
@@ -398,8 +381,8 @@ def insert_dribbles(matches_data):
         conn.commit()
         print("dribs data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+        #if conn:
+          #  conn.rollback()
         print(f"Error: {e}")
     finally:
         if cur:
@@ -438,8 +421,8 @@ def insert_passes(passes_data):
         conn.commit()
         print("Passes data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+        #if conn:
+          #  conn.rollback()
         print(f"Error: {e}")
     finally:
         if cur:
@@ -479,8 +462,8 @@ def insert_shots(shots_data):
         conn.commit()
         print("Shots data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+       # if conn:
+         #   conn.rollback()
         print(f"Error: {e}")
     finally:
         if cur:
@@ -510,8 +493,8 @@ def insert_card(matches_data):
         conn.commit()
         print("card data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+        #if conn:
+          #  conn.rollback()
         print(f"Error: {e}")
     finally:
         if cur:
@@ -541,8 +524,8 @@ def insert_fouls(matches_data):
         conn.commit()
         print("fouls data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+       # if conn:
+        #    conn.rollback()
         print(f"Error: {e}")
     finally:
         if cur:
@@ -573,8 +556,8 @@ def insert_goalkeepers(matches_data):
         conn.commit()
         print("goalkeepers data inserted successfully.")
     except psycopg.DatabaseError as e:
-        if conn:
-            conn.rollback()
+       # if conn:
+        #    conn.rollback()
         print(f"Error keepers: {e}")
     finally:
         if cur:
@@ -585,11 +568,11 @@ def insert_goalkeepers(matches_data):
 def import_matches(jfile):
     with open(jfile, 'r') as file:
         data = json.load(file)
-        insert_season(data)
+        insert_matches(data)
         insert_team(data)
         insert_stadium(data)
         insert_referees(data)
-        insert_matches(data)
+        insert_season1(data)
         insert_managers(data)
     return
 
@@ -633,17 +616,7 @@ def import_all_data():
     import_competitions(jfile)
 
     # match data 02/03
-    jfile = os.path.join(path, "matches", "2", "44.json")
-    import_matches(jfile)
-    # match data 18/19
-    jfile = os.path.join(path, "matches", "11", "4.json")
-    import_matches(jfile)
-    # match data 19/20
-    jfile = os.path.join(path, "matches", "11", "42.json")
-    import_matches(jfile)
-    # match data 20/21
-    jfile = os.path.join(path, "matches", "11", "90.json")
-    import_matches(jfile)
+
 
     # competitions
 
@@ -661,6 +634,20 @@ def import_all_data():
 
 
 def import_from_directory(directory):
+
+    path = "/Users/ashkumar/PycharmProjects/COMP3005-Project/json_loader/data/matches"
+    jfile = os.path.join(path, "2", "44.json")
+    import_matches(jfile)
+    # match data 18/19
+    jfile = os.path.join(path, "11", "4.json")
+    import_matches(jfile)
+    # match data 19/20
+    jfile = os.path.join(path, "11", "42.json")
+    import_matches(jfile)
+    # match data 20/21
+    jfile = os.path.join(path, "11", "90.json")
+    import_matches(jfile)
+
     for root, dirs, files in os.walk(directory):
         for filename in files:
             if filename.endswith('.json'):
