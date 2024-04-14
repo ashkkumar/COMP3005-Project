@@ -46,7 +46,7 @@ def insert_seasons(seasons_data):
 
         except Exception as e:
             print(f"Failed to insert data for season ID {season['season_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -76,14 +76,15 @@ def insert_competitions(competitions_data):
                 ) VALUES (
                     %(competition_id)s, %(season_id)s, %(competition_name)s, %(competition_gender)s, 
                     %(country_name)s, %(season_name)s
-                );
+                )
+                ON CONFLICT (competition_id) DO NOTHING;
             """
             cur.execute(insert_query, competition_data)
             conn.commit()
 
         except Exception as e:
             print(f"Failed to insert data for competition ID {competition['competition_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -97,51 +98,57 @@ def insert_countries(countries_data):
         try:
             # Prepare country data for insertion
             country_data = {
-                'country_id': country['country_id'],  # Ensure this key exists in your data
-                'country_name': country['country_name']
+                'country_id': country['id'],  # Ensure this key exists in your data
+                'country_name': country['name']
             }
 
             # Insert country data
             insert_query = """
-                INSERT INTO Country (country_id, country_name) VALUES (%(country_id)s, %(country_name)s);
+                INSERT INTO Country (country_id, country_name) 
+                VALUES (%(country_id)s, %(country_name)s);
             """
             cur.execute(insert_query, country_data)
             conn.commit()
 
         except Exception as e:
             print(f"Failed to insert data for country ID {country['country_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
 
 
-def insert_stadiums(stadiums_data):
-    conn = connect()  # Assume a 'connect' function is available to connect to your database
+def insert_stadiums(match_data):
+    conn = connect()  # This function should connect to your PostgreSQL database
     cur = conn.cursor()
 
-    for stadium in stadiums_data:
+    for match in match_data:
         try:
-            # Prepare stadium data for insertion
-            stadium_data = {
-                'stadium_id': stadium['stadium_id'],  # Ensure this key exists in your data
-                'stadium_name': stadium['stadium_name'],
-                'country_id': stadium['country_id']  # Make sure this country_id already exists in the Country table
-            }
+            # Check if 'stadium' key is present in the match data
+            if 'stadium' in match and 'id' in match['stadium'] and 'name' in match['stadium']:
+                stadium_data = {
+                    'stadium_id': match['stadium']['id'],
+                    'stadium_name': match['stadium']['name'],
+                    'country_id': match['stadium']['country']['id']  # Ensure country ID exists in your country table
+                }
 
-            # Insert stadium data
-            insert_query = """
-                INSERT INTO Stadium (stadium_id, stadium_name, country_id) VALUES (%(stadium_id)s, %(stadium_name)s, %(country_id)s);
-            """
-            cur.execute(insert_query, stadium_data)
-            conn.commit()
-
+                # SQL query to insert stadium data
+                insert_query = """
+                    INSERT INTO Stadium (stadium_id, stadium_name, country_id)
+                    VALUES (%(stadium_id)s, %(stadium_name)s, %(country_id)s)
+                    ON CONFLICT (stadium_id) DO NOTHING;
+                """
+                cur.execute(insert_query, stadium_data)
+                conn.commit()
+            else:
+                print(f"Missing required stadium data in match ID {match['match_id']}")
         except Exception as e:
-            print(f"Failed to insert data for stadium ID {stadium['stadium_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            print(f"Failed to insert data for stadium ID {match.get('stadium', {}).get('id', 'Unknown')} due to: {e}")
+            conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
+
 
 
 def insert_referees(referees_data):
@@ -165,7 +172,7 @@ def insert_referees(referees_data):
 
         except Exception as e:
             print(f"Failed to insert data for referee ID {referee['referee_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -196,7 +203,7 @@ def insert_teams(teams_data):
         except Exception as e:
             team_id = team.get('team_id', 'Unknown')
             print(f"Failed to insert data for team ID {team['team_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -233,6 +240,11 @@ def insert_matches(matches_data):
                 'away_team_score': match['away_score']
             }
 
+            country_data = {
+                'country_id': match['home_team']['country']['id'],  # Ensure this key exists in your data
+                'country_name': match['home_team']['country']['name']
+            }
+
             # Insert match data into the database
             insert_query = """
                 INSERT INTO Matches (
@@ -246,13 +258,19 @@ def insert_matches(matches_data):
             cur.execute(insert_query, match_data)
             conn.commit()
 
+            insert_query = """
+                            INSERT INTO Country (country_id, country_name) 
+                            VALUES (%(country_id)s, %(country_name)s);
+                        """
+            cur.execute(insert_query, country_data)
+            conn.commit()
+
         except Exception as e:
             print(f"Failed to insert data for match ID {match['match_id']} due to: {e}")
-            #conn.rollback()
+            # conn.rollback()
 
     cur.close()
     conn.close()
-
 
 
 def insert_players(players_data):
@@ -279,7 +297,7 @@ def insert_players(players_data):
 
         except Exception as e:
             print(f"Failed to insert data for player ID {player['player_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -308,7 +326,7 @@ def insert_lineups(lineups_data):
         except Exception as e:
             print(
                 f"Failed to insert data for lineup with team ID {lineup['team_id']} and player ID {lineup['player_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -338,7 +356,7 @@ def insert_managers(managers_data):
 
         except Exception as e:
             print(f"Failed to insert data for manager ID {manager['manager_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -385,7 +403,7 @@ def insert_events(events_data):
 
         except Exception as e:
             print(f"Failed to insert data for event ID {event['event_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -416,7 +434,7 @@ def insert_dribbles(dribbles_data):
 
         except Exception as e:
             print(f"Failed to insert data for dribble with event ID {dribble['event_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -467,7 +485,7 @@ def insert_passes(passes_data):
 
         except Exception as e:
             print(f"Failed to insert data for pass with event ID {pass_['event_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -514,7 +532,7 @@ def insert_shots(shots_data):
 
         except Exception as e:
             print(f"Failed to insert data for shot with event ID {shot['event_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -541,7 +559,7 @@ def insert_cards(cards_data):
 
         except Exception as e:
             print(f"Failed to insert data for card ID {card['card_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -577,7 +595,7 @@ def insert_fouls(fouls_data):
 
         except Exception as e:
             print(f"Failed to insert data for foul with event ID {foul['event_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -614,7 +632,7 @@ def insert_goalkeepers(goalkeepers_data):
 
         except Exception as e:
             print(f"Failed to insert data for goalkeeper with event ID {goalkeeper['event_id']} due to: {e}")
-            #conn.rollback()  # Roll back the transaction on error
+            # conn.rollback()  # Roll back the transaction on error
 
     cur.close()
     conn.close()
@@ -623,9 +641,9 @@ def insert_goalkeepers(goalkeepers_data):
 def import_matches(jfile):
     with open(jfile, 'r') as file:
         data = json.load(file)
+        insert_stadiums(data)
         insert_matches(data)
         insert_teams(data)
-        insert_stadiums(data)
         insert_referees(data)
         insert_managers(data)
     return
@@ -633,8 +651,9 @@ def import_matches(jfile):
 
 def import_competitions(jfile):
     with open(jfile, 'r') as file:
-        insert_seasons(json.load(file))
-        insert_competitions(json.load(file))
+        data = json.load(file)
+        insert_seasons(data)
+        insert_competitions(data)
     return
 
 
@@ -658,8 +677,8 @@ def import_lineups(jfile):
         insert_teams(data)
         insert_players(data)
         insert_cards(data)
-        insert_countries(data)
     return
+
 
 def import_from_directory(directory):
 
@@ -691,6 +710,7 @@ def import_from_directory(directory):
                     print(f"Skipped: {filename}")
             else:
                 print(f"File not processed (not JSON): {filename}")
+
 
 # Process the parent directory recursively
 import_from_directory("/Users/ashkumar/PycharmProjects/COMP3005-Project/json_loader/data/")
